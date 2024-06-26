@@ -8,6 +8,7 @@ package main
 import "C"
 
 import (
+	"errors"
 	"unsafe"
 )
 
@@ -17,25 +18,35 @@ type MediaInfoWrapper struct {
 }
 
 // Create and initialize an instance of the MediaInfoWrapper
-func NewMediaInfoWrapper(fileName string) *MediaInfoWrapper {
-	Logger.WithField("component", "mediainfowrapper").Debug("Initializing MediaInfoWrapper")
+func NewMediaInfoWrapper(fileName string) (*MediaInfoWrapper, error) {
+	Logger.WithField(
+		"component",
+		"mediainfowrapper").Debug("Initializing MediaInfoWrapper")
 
 	cFileName := C.CString(fileName)
 	defer C.free(unsafe.Pointer(cFileName))
 
 	cmi := C.newMediaInfoWrapper(cFileName)
 	if cmi == nil {
-		Logger.WithField("component", "mediainfowrapper").Fatal("Failed to create MediaInfoWrapper")
+		errMsg := "failed to create MediaInfoWrapper"
+		Logger.WithField(
+			"component",
+			"mediainfowrapper").Error(errMsg)
+		return &MediaInfoWrapper{}, errors.New(errMsg)
 	}
 
-	Logger.WithField("component", "mediainfowrapper").Debug("MediaInfoWrapper Initialized")
-	return &MediaInfoWrapper{pointer: unsafe.Pointer(cmi)}
+	Logger.WithField(
+		"component",
+		"mediainfowrapper").Debug("MediaInfoWrapper Initialized")
+	return &MediaInfoWrapper{pointer: unsafe.Pointer(cmi)}, nil
 }
 
 // Prints all of the properties for a media file
 func (mi *MediaInfoWrapper) listProperties() {
 	info := C.readMediaFile((*C.struct_MediaInfoWrapper)(mi.pointer))
-	Logger.WithField("component", "mediainfowrapper").Debug(C.GoString(info))
+	Logger.WithField(
+		"component",
+		"mediainfowrapper").Debug(C.GoString(info))
 }
 
 // Get the number of audio streams in a media file
