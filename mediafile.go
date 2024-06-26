@@ -26,22 +26,25 @@ type MediaFile struct {
 
 // Constructor for a MediaFile
 func NewMediaFile(fileName string) (*MediaFile, error) {
+	Logger.WithField(
+		"component",
+		"mediafile").Infof("processing file: %s\n", fileName)
+
 	// Determine the type of media: TV or MOVIE and parse the file name
 	segments := strings.Split(fileName, " - ")
 	if len(segments) >= 3 {
 		// Process TV files
-		Logger.Infof("%s appears to be a TV show\n", fileName)
-		fileType := TV
+		Logger.WithField(
+			"component",
+			"mediafile").Info("file appears to be a TV show")
 		pattern := `^([a-zA-Z0-9\s]+)\s-\s(\w+)\s-\s([a-zA-Z0-9\s\.]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)$`
-		re, err := regexp.Compile(pattern)
+		matches, err := _extractMatches(fileName, pattern)
 		if err != nil {
-			Logger.Error("Error compiling pattern")
 			return &MediaFile{}, err
 		}
 
-		matches := re.FindStringSubmatch(fileName)
 		return &MediaFile{
-			fileType:  fileType,
+			fileType:  TV,
 			title:     matches[1],
 			season:    matches[2],
 			episode:   matches[3],
@@ -51,18 +54,17 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 
 	} else if len(segments) < 3 && len(segments) > 0 {
 		// Process Movie files
-		Logger.Infof("%s appears to be a movie\n", fileName)
-		fileType := MOVIE
+		Logger.WithField(
+			"component",
+			"mediafile").Info("file appears to be a movie")
 		pattern := `([a-zA-Z0-9\s\-]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)`
-		re, err := regexp.Compile(pattern)
+		matches, err := _extractMatches(fileName, pattern)
 		if err != nil {
-			Logger.Error("Error compiling pattern")
 			return &MediaFile{}, err
 		}
 
-		matches := re.FindStringSubmatch(fileName)
 		return &MediaFile{
-			fileType:  fileType,
+			fileType:  MOVIE,
 			title:     matches[1],
 			season:    "", // not present on a Movie
 			episode:   "", // not present on a Movie
@@ -71,8 +73,34 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 		}, nil
 
 	} else {
-		// We should never get here
-		Logger.Errorf("Unable to determine pattern of file %s\n", fileName)
+		// File name pattern is unknown
+		Logger.WithField(
+			"component",
+			"mediafile").Errorf("unable to determine pattern of %s\n", fileName)
 		return &MediaFile{}, errors.New("failed to create MediaFile")
 	}
+}
+
+// extract matches from a file name using the regex pattern
+func _extractMatches(fileName string, pattern string) ([]string, error) {
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		Logger.Error("error compiling pattern")
+		return nil, err
+	}
+
+	Logger.WithField(
+		"component",
+		"mediafile").Debugf("using regex pattern %s\n", re.String())
+
+	matches := re.FindStringSubmatch(fileName)
+	if len(matches) == 0 {
+		return nil, errors.New("failed to find matches")
+	}
+
+	Logger.WithField(
+		"component",
+		"mediafile").Debugf("found %d field(s) in file name\n", len(matches))
+
+	return matches, nil
 }
