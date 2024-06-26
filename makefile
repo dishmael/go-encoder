@@ -1,7 +1,7 @@
 TARGET = encoder
 OUTDIR = bin
 LOGFILE = ${TARGET}.log
-TESTFILE = "Big Buck Bunny (2014) Orig.mp4"
+TESTFILE = "samples/Big Buck Bunny (2014) Orig.mp4"
 
 all: clean build
 
