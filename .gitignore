@@ -2,6 +2,7 @@
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
 # Binaries for programs and plugins
+bin/
 *.exe
 *.exe~
 *.dll
@@ -20,3 +21,22 @@
 # Go workspace file
 go.work
 go.work.sum
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Media files
+*.avi
+*.mkv
+*.mov
+*.mp3
+*.mp4
+*.mpeg
+*.mpg
+*.ogg
+*.qt
+*.webm
+*.wmv
