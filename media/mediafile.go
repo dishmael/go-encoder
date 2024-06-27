@@ -44,14 +44,16 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 			return &MediaFile{}, err
 		}
 
-		return &MediaFile{
+		mf := &MediaFile{
 			fileType:  TV,
 			title:     matches[1],
 			season:    matches[2],
 			episode:   matches[3],
 			year:      matches[4],
 			extension: matches[5],
-		}, nil
+		}
+		log.Logger.Debugf("%+v\n", mf)
+		return mf, nil
 
 	} else if len(segments) < 3 && len(segments) > 0 {
 		// Process Movie files
@@ -64,14 +66,16 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 			return &MediaFile{}, err
 		}
 
-		return &MediaFile{
+		mf := &MediaFile{
 			fileType:  MOVIE,
 			title:     matches[1],
 			season:    "", // not present on a Movie
 			episode:   "", // not present on a Movie
 			year:      matches[2],
 			extension: matches[3],
-		}, nil
+		}
+		log.Logger.Debugf("%+v\n", mf)
+		return mf, nil
 
 	} else {
 		// File name pattern is unknown
