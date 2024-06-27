@@ -37,7 +37,7 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 		Logger.WithField(
 			"component",
 			"mediafile").Info("file appears to be a TV show")
-		pattern := `^([a-zA-Z0-9\s]+)\s-\s(\w+)\s-\s([a-zA-Z0-9\s\.]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)$`
+		pattern := `([a-zA-Z0-9\s]+)\s-\s(\w+)\s-\s([a-zA-Z0-9\s\.]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)$`
 		matches, err := _extractMatches(fileName, pattern)
 		if err != nil {
 			return &MediaFile{}, err
