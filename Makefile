@@ -1,7 +1,6 @@
 TARGET = encoder
 OUTDIR = bin
 LOGFILE = ${TARGET}.log
-TESTFILE = "samples/Big Buck Bunny (2014) Orig.mp4"
 
 all: clean build
 
@@ -10,7 +9,7 @@ build:
 
 test: clean build
 	clear
-	./${OUTDIR}/${TARGET} ${TESTFILE}
+	go test ./...
 
 clean:
 	rm -f ${OUTDIR}/${TARGET}
