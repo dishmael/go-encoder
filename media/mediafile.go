@@ -39,7 +39,7 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 			"component",
 			"mediafile").Info("file appears to be a TV show")
 		pattern := `([a-zA-Z0-9\s]+)\s-\s(\w+)\s-\s([a-zA-Z0-9\s\.]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)$`
-		matches, err := _extractMatches(fileName, pattern)
+		matches, err := extractMatches(fileName, pattern)
 		if err != nil {
 			return &MediaFile{}, err
 		}
@@ -52,7 +52,9 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 			year:      matches[4],
 			extension: matches[5],
 		}
-		log.Logger.Debugf("%+v\n", mf)
+		log.Logger.WithField(
+			"component",
+			"mediafile").Debugf("%+v\n", mf)
 		return mf, nil
 
 	} else if len(segments) < 3 && len(segments) > 0 {
@@ -61,7 +63,7 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 			"component",
 			"mediafile").Info("file appears to be a movie")
 		pattern := `([a-zA-Z0-9\s\-]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)`
-		matches, err := _extractMatches(fileName, pattern)
+		matches, err := extractMatches(fileName, pattern)
 		if err != nil {
 			return &MediaFile{}, err
 		}
@@ -74,7 +76,9 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 			year:      matches[2],
 			extension: matches[3],
 		}
-		log.Logger.Debugf("%+v\n", mf)
+		log.Logger.WithField(
+			"component",
+			"mediafile").Debugf("%+v\n", mf)
 		return mf, nil
 
 	} else {
@@ -87,7 +91,7 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 }
 
 // extract matches from a file name using the regex pattern
-func _extractMatches(fileName string, pattern string) ([]string, error) {
+func extractMatches(fileName string, pattern string) ([]string, error) {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
 		log.Logger.Error("error compiling pattern")
