@@ -1,7 +1,7 @@
 package media
 
 /*
-#cgo LDFLAGS: -framework CoreFoundation -L/usr/local/lib -L/usr/local/Cellar/libmediainfo/24.05/lib -lmediainfo
+#cgo LDFLAGS: -framework CoreFoundation -L . -L/usr/local/lib -L/usr/local/Cellar/libmediainfo/24.05/lib -lmediainfo
 #include <stdlib.h>
 #include "../wrapper/mediainfo.c"
 */
@@ -43,27 +43,66 @@ func NewMediaInfoWrapper(fileName string) (*MediaInfoWrapper, error) {
 }
 
 // Prints all of the properties for a media file
-func (mi *MediaInfoWrapper) listProperties() {
+func (mi *MediaInfoWrapper) PrintProperties() {
+	// no need to free info, it points to a constant string (cont char*)
 	info := C.readMediaFile((*C.struct_MediaInfoWrapper)(mi.pointer))
 	log.Logger.WithField(
 		"component",
 		"mediainfowrapper").Debug(C.GoString(info))
 }
 
-// Get the number of audio streams in a media file
-func (mi *MediaInfoWrapper) getAudioCount() int {
-	audioCount := C.getAudioCount((*C.struct_MediaInfoWrapper)(mi.pointer))
-	return int(audioCount)
+// Generic function to retrieve a General property
+func (mi *MediaInfoWrapper) GetGeneralProperty(property string) string {
+	cProperty := C.CString(property)
+	defer C.free(unsafe.Pointer(cProperty))
+
+	// no need to free cProps, it points to a constant string (cont char*)
+	cProp := C.getGeneralProperty((*C.struct_MediaInfoWrapper)(mi.pointer), cProperty)
+	log.Logger.WithField(
+		"component",
+		"mediainfowrapper").Debugf("%s = %s", property, C.GoString(cProp))
+
+	return C.GoString(cProp)
 }
 
-// Get the number of channels for a specific audio index
-func (mi *MediaInfoWrapper) getAudioChannels(index int) int {
-	audioChannels := C.getAudioChannels((*C.struct_MediaInfoWrapper)(mi.pointer), C.int(index))
-	return int(audioChannels)
+// Generic function to retrieve a property from a specific Video stream (index)
+func (mi *MediaInfoWrapper) GetVideoProperty(property string, index int) string {
+	cProperty := C.CString(property)
+	defer C.free(unsafe.Pointer(cProperty))
+
+	// no need to free cProps, it points to a constant string (cont char*)
+	cProp := C.getVideoProperty((*C.struct_MediaInfoWrapper)(mi.pointer), cProperty)
+	log.Logger.WithField(
+		"component",
+		"mediainfowrapper").Debugf("%s = %s", property, C.GoString(cProp))
+
+	return C.GoString(cProp)
 }
 
-// Get the bitrate for a specific audio index
-func (mi *MediaInfoWrapper) getAudioBitRate(index int) int {
-	audioBitRate := C.getAudioBitRate((*C.struct_MediaInfoWrapper)(mi.pointer), C.int(index))
-	return int(audioBitRate)
+// Generic function to retrieve a property from a specific Audio stream (index)
+func (mi *MediaInfoWrapper) GetAudioProperty(property string, index int) string {
+	cProperty := C.CString(property)
+	defer C.free(unsafe.Pointer(cProperty))
+
+	// no need to free cProps, it points to a constant string (cont char*)
+	cProp := C.getAudioProperty((*C.struct_MediaInfoWrapper)(mi.pointer), cProperty, C.int(index))
+	log.Logger.WithField(
+		"component",
+		"mediainfowrapper").Debugf("%s = %s", property, C.GoString(cProp))
+
+	return C.GoString(cProp)
+}
+
+// Generic function to retrieve a property from a specific Text stream (index)
+func (mi *MediaInfoWrapper) GetTextProperty(property string, index int) string {
+	cProperty := C.CString(property)
+	defer C.free(unsafe.Pointer(cProperty))
+
+	// no need to free cProps, it points to a constant string (cont char*)
+	cProp := C.getTextProperty((*C.struct_MediaInfoWrapper)(mi.pointer), cProperty, C.int(index))
+	log.Logger.WithField(
+		"component",
+		"mediainfowrapper").Debugf("%s = %s", property, C.GoString(cProp))
+
+	return C.GoString(cProp)
 }
