@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	log "go-encoder/logger"
 	"regexp"
 	"strings"
 )
@@ -26,7 +27,7 @@ type MediaFile struct {
 
 // Constructor for a MediaFile
 func NewMediaFile(fileName string) (*MediaFile, error) {
-	Logger.WithField(
+	log.Logger.WithField(
 		"component",
 		"mediafile").Infof("processing file: %s\n", fileName)
 
@@ -34,7 +35,7 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 	segments := strings.Split(fileName, " - ")
 	if len(segments) >= 3 {
 		// Process TV files
-		Logger.WithField(
+		log.Logger.WithField(
 			"component",
 			"mediafile").Info("file appears to be a TV show")
 		pattern := `([a-zA-Z0-9\s]+)\s-\s(\w+)\s-\s([a-zA-Z0-9\s\.]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)$`
@@ -54,7 +55,7 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 
 	} else if len(segments) < 3 && len(segments) > 0 {
 		// Process Movie files
-		Logger.WithField(
+		log.Logger.WithField(
 			"component",
 			"mediafile").Info("file appears to be a movie")
 		pattern := `([a-zA-Z0-9\s\-]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)`
@@ -74,7 +75,7 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 
 	} else {
 		// File name pattern is unknown
-		Logger.WithField(
+		log.Logger.WithField(
 			"component",
 			"mediafile").Errorf("unable to determine pattern of %s\n", fileName)
 		return &MediaFile{}, errors.New("failed to create MediaFile")
@@ -85,11 +86,11 @@ func NewMediaFile(fileName string) (*MediaFile, error) {
 func _extractMatches(fileName string, pattern string) ([]string, error) {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
-		Logger.Error("error compiling pattern")
+		log.Logger.Error("error compiling pattern")
 		return nil, err
 	}
 
-	Logger.WithField(
+	log.Logger.WithField(
 		"component",
 		"mediafile").Debugf("using regex pattern %s\n", re.String())
 
@@ -98,7 +99,7 @@ func _extractMatches(fileName string, pattern string) ([]string, error) {
 		return nil, errors.New("failed to find matches")
 	}
 
-	Logger.WithField(
+	log.Logger.WithField(
 		"component",
 		"mediafile").Debugf("found %d field(s) in file name\n", len(matches))
 

@@ -9,7 +9,6 @@ build:
 	go build -o ${OUTDIR}/${TARGET} \
 		main.go \
 		mediainfo.go \
-		logger.go \
 		mediafile.go
 
 test: clean build

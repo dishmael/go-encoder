@@ -9,6 +9,7 @@ import "C"
 
 import (
 	"errors"
+	log "go-encoder/logger"
 	"unsafe"
 )
 
@@ -19,7 +20,7 @@ type MediaInfoWrapper struct {
 
 // Create and initialize an instance of the MediaInfoWrapper
 func NewMediaInfoWrapper(fileName string) (*MediaInfoWrapper, error) {
-	Logger.WithField(
+	log.Logger.WithField(
 		"component",
 		"mediainfowrapper").Debug("Initializing MediaInfoWrapper")
 
@@ -29,13 +30,13 @@ func NewMediaInfoWrapper(fileName string) (*MediaInfoWrapper, error) {
 	cmi := C.newMediaInfoWrapper(cFileName)
 	if cmi == nil {
 		errMsg := "failed to create MediaInfoWrapper"
-		Logger.WithField(
+		log.Logger.WithField(
 			"component",
 			"mediainfowrapper").Error(errMsg)
 		return &MediaInfoWrapper{}, errors.New(errMsg)
 	}
 
-	Logger.WithField(
+	log.Logger.WithField(
 		"component",
 		"mediainfowrapper").Debug("MediaInfoWrapper Initialized")
 	return &MediaInfoWrapper{pointer: unsafe.Pointer(cmi)}, nil
@@ -44,7 +45,7 @@ func NewMediaInfoWrapper(fileName string) (*MediaInfoWrapper, error) {
 // Prints all of the properties for a media file
 func (mi *MediaInfoWrapper) listProperties() {
 	info := C.readMediaFile((*C.struct_MediaInfoWrapper)(mi.pointer))
-	Logger.WithField(
+	log.Logger.WithField(
 		"component",
 		"mediainfowrapper").Debug(C.GoString(info))
 }
