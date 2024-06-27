@@ -6,10 +6,7 @@ TESTFILE = "samples/Big Buck Bunny (2014) Orig.mp4"
 all: clean build
 
 build:
-	go build -o ${OUTDIR}/${TARGET} \
-		main.go \
-		mediainfo.go \
-		mediafile.go
+	go build -o ${OUTDIR}/${TARGET} main.go
 
 test: clean build
 	clear

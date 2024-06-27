@@ -1,9 +1,9 @@
-package main
+package media
 
 /*
 #cgo LDFLAGS: -framework CoreFoundation -L/usr/local/lib -L/usr/local/Cellar/libmediainfo/24.05/lib -lmediainfo
 #include <stdlib.h>
-#include "wrapper/mediainfo.c"
+#include "../wrapper/mediainfo.c"
 */
 import "C"
 
