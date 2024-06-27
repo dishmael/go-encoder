@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -19,10 +20,26 @@ var Logger = logrus.New()
 func init() {
 	const DEFAULT_LEVEL = "debug"
 
-	// Load environment variables from .env file
-	err := godotenv.Load()
-	if err != nil {
-		Logger.Warnf("No .env file found, using default log level: %s\n", DEFAULT_LEVEL)
+	// Try to find the .env file
+	if pwd, err := os.Getwd(); err != nil {
+		panic(err)
+
+	} else {
+		var envFile string
+		paths := [2]string{".env", "../.env"}
+
+		for _, p := range paths {
+			if _, err := os.Stat(filepath.Join(pwd, p)); err == nil {
+				envFile = filepath.Join(pwd, p)
+				break
+			}
+		}
+
+		// Load environment variables from .env file
+		err := godotenv.Load(envFile)
+		if err != nil {
+			fmt.Printf("[WARN] No .env file found, using default log level: %s\n", DEFAULT_LEVEL)
+		}
 	}
 
 	// Get the log level from the environment variable
@@ -34,21 +51,21 @@ func init() {
 	// Parse the log level
 	level, err := logrus.ParseLevel(logLevel)
 	if err != nil {
-		Logger.Warnf("Invalid log level in .env file, using default log level: %s\n", DEFAULT_LEVEL)
+		fmt.Printf("[WARN] Invalid log level in .env file, using default log level: %s\n", DEFAULT_LEVEL)
 		level = logrus.InfoLevel
 	}
 
-	// Determine path for log file
+	// Determine path for executable file
 	ex, err := os.Executable()
 	if err != nil {
-		Logger.Fatalf("Failed to determine executable: %v", err)
+		fmt.Printf("[ERROR] Failed to determine executable")
 	}
 
 	// Create a log file
-	filePath := filepath.Dir(ex) + "/encoder.log"
-	logFile, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file := filepath.Join(filepath.Dir(ex), "encoder.log")
+	logFile, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		Logger.Fatalf("Failed to open log file: %v", err)
+		panic("[FATAL] Failed to open log file")
 	}
 
 	// Set the output to both stdout and the log file
