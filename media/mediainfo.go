@@ -43,12 +43,10 @@ func NewMediaInfoWrapper(fileName string) (*MediaInfoWrapper, error) {
 }
 
 // Prints all of the properties for a media file
-func (mi *MediaInfoWrapper) PrintProperties() {
+func (mi *MediaInfoWrapper) GetAllProperties() string {
 	// no need to free info, it points to a constant string (cont char*)
 	info := C.readMediaFile((*C.struct_MediaInfoWrapper)(mi.pointer))
-	log.Logger.WithField(
-		"component",
-		"mediainfowrapper").Debug(C.GoString(info))
+	return C.GoString(info)
 }
 
 // Generic function to retrieve a General property
