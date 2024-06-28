@@ -83,7 +83,7 @@ func getMediaFileType(segments int) MediaFileType {
 			WithField("component", "mediafile").
 			Info("file appears to be a tv show")
 		return TV
-	case segments > 0:
+	case segments < 3 && segments > 0:
 		log.Logger.
 			WithField("component", "mediafile").
 			Info("file appears to be a movie")
@@ -169,6 +169,8 @@ func populateMediaFile(fields []string, mft MediaFileType) *MediaFile {
 }
 
 // toString
+//
+//lint:ignore U1000 Ignore unused function temporarily for debugging
 func (mf *MediaFile) toString() string {
 	out, err := json.Marshal(mf)
 	if err != nil {

@@ -69,7 +69,8 @@ func init() {
 	}
 
 	// Set the output to both stdout and the log file
-	mw := io.MultiWriter(os.Stdout, logFile)
+	//mw := io.MultiWriter(os.Stdout, logFile)
+	mw := io.MultiWriter(logFile)
 	Logger.SetOutput(mw)
 
 	// Set the log level (can be changed to logrus.DebugLevel, logrus.InfoLevel, etc.)

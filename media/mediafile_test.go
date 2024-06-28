@@ -1,98 +1,187 @@
 package media
 
 import (
+	"errors"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewMediaFile(t *testing.T) {
-	t.Run("test movies", func(t *testing.T) {
+	tests := []struct {
+		name        string
+		fileName    string
+		expected    *MediaFile
+		expectedErr error
+	}{
+		{
+			name:     "TV show file",
+			fileName: "Show Name - S01E01 - Episode Name (2022) Orig.mkv",
+			expected: &MediaFile{
+				Title:     "Show Name",
+				Season:    "S01E01",
+				Episode:   "Episode Name",
+				Year:      "2022",
+				Extension: "mkv",
+			},
+			expectedErr: nil,
+		},
+		{
+			name:     "Movie file",
+			fileName: "Movie Name (2022) Orig.mkv",
+			expected: &MediaFile{
+				Title:     "Movie Name",
+				Year:      "2022",
+				Extension: "mkv",
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "Unknown file type",
+			fileName:    "Unknown File Type.mkv",
+			expected:    nil,
+			expectedErr: errors.New("failed to find matches"),
+		},
+	}
 
-		t.Run("file is a movie", func(t *testing.T) {
-			mf, err := NewMediaFile("Example Movie Title (2024) Orig.mkv")
-			if err != nil {
-				t.Error(err)
-				return
-			}
-
-			got := mf.toString()
-			want := `{"Title":"Example Movie Title","Season":"","Episode":"","Year":"2024","Extension":"mkv"}`
-
-			if got != want {
-				t.Errorf("got %s want %s", got, want)
-			}
-		})
-
-		t.Run("movie file missing orig suffix", func(t *testing.T) {
-			_, err := NewMediaFile("Example Movie Title (2024).mkv")
-			if err == nil { // should fail
-				t.Error(err)
-				return
-			}
-		})
-
-		t.Run("movie file missing year", func(t *testing.T) {
-			_, err := NewMediaFile("Example Movie Title Orig.mkv")
-			if err == nil { // should fail
-				t.Error(err)
-				return
-			}
-		})
-
-		t.Run("movie file has a hyphen", func(t *testing.T) {
-			mf, err := NewMediaFile("Example - Movie Title (2024) Orig.mkv")
-			if err != nil {
-				t.Error(err)
-				return
-			}
-
-			got := mf.toString()
-			want := `{"Title":"Example - Movie Title","Season":"","Episode":"","Year":"2024","Extension":"mkv"}`
-
-			if got != want {
-				t.Errorf("got %s want %s", got, want)
-			}
-		})
-	})
-
-	/* Test TV Shows */
-	t.Run("test tv shows", func(t *testing.T) {
-		t.Run("file is a tv show", func(t *testing.T) {
-			mf, err := NewMediaFile("TV Show - S01E01 - The Episode Name (2024) Orig.mkv")
-			if err != nil {
-				t.Error(err)
-				return
-			}
-
-			got := mf.toString()
-			want := `{"Title":"TV Show","Season":"S01E01","Episode":"The Episode Name","Year":"2024","Extension":"mkv"}`
-
-			if got != want {
-				t.Errorf("got %s want %s", got, want)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mf, err := NewMediaFile(tt.fileName)
+			if tt.expectedErr != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedErr.Error(), err.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected, mf)
 			}
 		})
+	}
+}
 
-		t.Run("tv show name wrong season format", func(t *testing.T) {
-			_, err := NewMediaFile("TV Show - S01 - The Episode Name (2024) Orig.mkv")
-			if err == nil { // should fail
-				t.Error(err)
-				return
+func TestGetSegments(t *testing.T) {
+	tests := []struct {
+		name      string
+		fileName  string
+		expected  int
+		expectErr bool
+	}{
+		{"TV show file", "Show Name - S01E01 - Episode Name (2022) Orig.mkv", 3, false},
+		{"Movie file", "Movie Name (2022) Orig.mkv", 1, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			segments := getSegments(tt.fileName)
+			assert.Equal(t, tt.expected, segments)
+		})
+	}
+}
+
+func TestGetMediaFileType(t *testing.T) {
+	tests := []struct {
+		name     string
+		segments int
+		expected MediaFileType
+	}{
+		{"TV show", 5, TV},
+		{"Movie", 2, MOVIE},
+		{"Unknown", 0, UNKNOWN},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mft := getMediaFileType(tt.segments)
+			assert.Equal(t, tt.expected, mft)
+		})
+	}
+}
+
+func TestGetRegExPattern(t *testing.T) {
+	tests := []struct {
+		name     string
+		mft      MediaFileType
+		expected string
+	}{
+		{"TV show pattern", TV, `([a-zA-Z0-9\s]+)\s-\s(S[0-9]+E[0-9]+)\s-\s([a-zA-Z0-9\s\.]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)$`},
+		{"Movie pattern", MOVIE, `([a-zA-Z0-9\s\-]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)`},
+		{"Unknown pattern", UNKNOWN, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pattern := getRegExPattern(tt.mft)
+			assert.Equal(t, tt.expected, pattern)
+		})
+	}
+}
+
+func TestExtractMatches(t *testing.T) {
+	tests := []struct {
+		name      string
+		fileName  string
+		pattern   string
+		expected  []string
+		expectErr bool
+	}{
+		{
+			name:     "TV show match",
+			fileName: "Show Name - S01E01 - Episode Name (2022) Orig.mkv",
+			pattern:  `([a-zA-Z0-9\s]+)\s-\s(\w+)\s-\s([a-zA-Z0-9\s\.]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)$`,
+			expected: []string{"Show Name - S01E01 - Episode Name (2022) Orig.mkv", "Show Name", "S01E01", "Episode Name", "2022", "mkv"},
+		},
+		{
+			name:     "Movie match",
+			fileName: "Movie Name (2022) Orig.mkv",
+			pattern:  `([a-zA-Z0-9\s\-]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)`,
+			expected: []string{"Movie Name (2022) Orig.mkv", "Movie Name", "2022", "mkv"},
+		},
+		{
+			name:      "No match",
+			fileName:  "No Match File.mkv",
+			pattern:   `([a-zA-Z0-9\s]+)\s-\s(\w+)\s-\s([a-zA-Z0-9\s\.]+)\s\(([0-9]+)\)\sOrig\.([mpkv4]+)$`,
+			expected:  nil,
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			matches, err := extractMatches(tt.fileName, tt.pattern)
+			if tt.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected, matches)
 			}
 		})
+	}
+}
 
-		t.Run("tv show name has an extra hyphen", func(t *testing.T) {
-			_, err := NewMediaFile("TV - Show - S01 - The Episode Name (2024) Orig.mkv")
-			if err == nil { // should fail
-				t.Error(err)
-				return
-			}
-		})
+func TestPopulateMediaFile(t *testing.T) {
+	tests := []struct {
+		name     string
+		fields   []string
+		mft      MediaFileType
+		expected *MediaFile
+	}{
+		{
+			name:     "Populate TV show",
+			fields:   []string{"Show Name - S01E01 - Episode Name (2022) Orig.mkv", "Show Name", "S01E01", "Episode Name", "2022", "mkv"},
+			mft:      TV,
+			expected: &MediaFile{Title: "Show Name", Season: "S01E01", Episode: "Episode Name", Year: "2022", Extension: "mkv"},
+		},
+		{
+			name:     "Populate Movie",
+			fields:   []string{"Movie Name (2022) Orig.mkv", "Movie Name", "2022", "mkv"},
+			mft:      MOVIE,
+			expected: &MediaFile{Title: "Movie Name", Year: "2022", Extension: "mkv"},
+		},
+	}
 
-		t.Run("tv show name missing year", func(t *testing.T) {
-			_, err := NewMediaFile("TV Show - S01 - The Episode Name Orig.mkv")
-			if err == nil { // should fail
-				t.Error(err)
-				return
-			}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mf := populateMediaFile(tt.fields, tt.mft)
+			assert.Equal(t, tt.expected, mf)
 		})
-	})
+	}
 }
